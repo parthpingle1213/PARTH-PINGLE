@@ -1,0 +1,178 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Doubly Linked List Node (for normal route)
+struct Station {
+    string name;
+    Station* next;
+    Station* prev;
+    Station(string n) : name(n), next(nullptr), prev(nullptr) {}
+};
+
+// Circular Linked List Node (for loop route)
+struct LoopStation {
+    string name;
+    LoopStation* next;
+    LoopStation* prev;
+    LoopStation(string n) : name(n), next(nullptr), prev(nullptr) {}
+};
+
+// Train Route Planner
+class TrainRoutePlanner {
+private:
+    Station* head;          // start of normal route
+    LoopStation* loopHead;  // start of loop route
+    Station* current;       // current position in normal route
+    LoopStation* loopCurrent; // current position in loop route
+
+public:
+    TrainRoutePlanner() : head(nullptr), loopHead(nullptr), current(nullptr), loopCurrent(nullptr) {}
+
+    // Add station to doubly linked list (normal route)
+    void addStation(string name) {
+        Station* newStation = new Station(name);
+        if (!head) {
+            head = newStation;
+            current = head;
+        } else {
+            Station* temp = head;
+            while (temp->next) temp = temp->next;
+            temp->next = newStation;
+            newStation->prev = temp;
+        }
+    }
+
+    // Add station to circular linked list (loop route)
+    void addLoopStation(string name) {
+        LoopStation* newStation = new LoopStation(name);
+        if (!loopHead) {
+            loopHead = newStation;
+            loopHead->next = loopHead;
+            loopHead->prev = loopHead;
+            loopCurrent = loopHead;
+        } else {
+            LoopStation* tail = loopHead->prev;
+            tail->next = newStation;
+            newStation->prev = tail;
+            newStation->next = loopHead;
+            loopHead->prev = newStation;
+        }
+    }
+
+    // Move to next station (normal route)
+    void nextStation() {
+        if (current && current->next) {
+            current = current->next;
+            cout << "Moved to next station: " << current->name << endl;
+        } else {
+            cout << "End of the line reached!" << endl;
+        }
+    }
+
+    // Move to previous station (normal route)
+    void prevStation() {
+        if (current && current->prev) {
+            current = current->prev;
+            cout << "Moved to previous station: " << current->name << endl;
+        } else {
+            cout << "Already at the starting station!" << endl;
+        }
+    }
+
+    // Move to next station (loop route)
+    void nextLoopStation() {
+        if (loopCurrent) {
+            loopCurrent = loopCurrent->next;
+            cout << "Moved to next loop station: " << loopCurrent->name << endl;
+        }
+    }
+
+    // Move to previous station (loop route)
+    void prevLoopStation() {
+        if (loopCurrent) {
+            loopCurrent = loopCurrent->prev;
+            cout << "Moved to previous loop station: " << loopCurrent->name << endl;
+        }
+    }
+
+    // Display route (normal)
+    void displayRoute() {
+        cout << "\n--- Normal Route ---\n";
+        Station* temp = head;
+        while (temp) {
+            cout << temp->name;
+            if (temp->next) cout << " -> ";
+            temp = temp->next;
+        }
+        cout << "\n";
+    }
+
+    // Display loop route
+    void displayLoopRoute() {
+        if (!loopHead) {
+            cout << "No loop route available.\n";
+            return;
+        }
+        cout << "\n--- Loop Route ---\n";
+        LoopStation* temp = loopHead;
+        do {
+            cout << temp->name << " -> ";
+            temp = temp->next;
+        } while (temp != loopHead);
+        cout << "(back to " << loopHead->name << ")\n";
+    }
+
+    // Show current station (normal route)
+    void showCurrent() {
+        if (current)
+            cout << "Current station (normal route): " << current->name << endl;
+        else
+            cout << "No current station.\n";
+    }
+
+    // Show current loop station
+    void showLoopCurrent() {
+        if (loopCurrent)
+            cout << "Current station (loop route): " << loopCurrent->name << endl;
+        else
+            cout << "No current loop station.\n";
+    }
+};
+
+// Main
+int main() {
+    TrainRoutePlanner planner;
+    int choice;
+    string name;
+
+    // Preload stations
+    planner.addStation("A");
+    planner.addStation("B");
+    planner.addStation("C");
+    planner.addStation("D");
+
+    planner.addLoopStation("X");
+    planner.addLoopStation("Y");
+    planner.addLoopStation("Z");
+
+    do {
+        cout << "\n1. Show Normal Route\n2. Show Loop Route\n3. Next Station (Normal)\n4. Previous Station (Normal)\n5. Show Current (Normal)\n6. Next Station (Loop)\n7. Previous Station (Loop)\n8. Show Current (Loop)\n9. Exit\nEnter choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case 1: planner.displayRoute(); break;
+            case 2: planner.displayLoopRoute(); break;
+            case 3: planner.nextStation(); break;
+            case 4: planner.prevStation(); break;
+            case 5: planner.showCurrent(); break;
+            case 6: planner.nextLoopStation(); break;
+            case 7: planner.prevLoopStation(); break;
+            case 8: planner.showLoopCurrent(); break;
+            case 9: cout << "Exiting...\n"; break;
+            default: cout << "Invalid choice!\n";
+        }
+    } while (choice != 9);
+
+    return 0;
+}
