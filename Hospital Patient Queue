@@ -1,0 +1,130 @@
+#include <iostream>
+#include <queue>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+// Patient structure
+struct Patient {
+    string name;
+    int severity;  // higher = more critical
+    bool emergency;
+    
+    Patient(string n, int s, bool e) : name(n), severity(s), emergency(e) {}
+};
+
+// Comparator for priority queue (higher severity first)
+struct CompareSeverity {
+    bool operator()(Patient const& p1, Patient const& p2) {
+        return p1.severity < p2.severity; // max-heap
+    }
+};
+
+// Hospital Queue Manager
+class Hospital {
+private:
+    priority_queue<Patient, vector<Patient>, CompareSeverity> emergencyQueue;
+    queue<Patient> regularQueue;
+    const int consultationTime = 10; // minutes per patient
+
+public:
+    // Add new patient
+    void addPatient(string name, bool emergency, int severity = 0) {
+        if (emergency) {
+            emergencyQueue.push(Patient(name, severity, true));
+            cout << "Emergency patient added: " << name << " (Severity " << severity << ")\n";
+        } else {
+            regularQueue.push(Patient(name, 0, false));
+            cout << "Regular patient added: " << name << "\n";
+        }
+    }
+
+    // Serve next patient
+    void servePatient() {
+        if (!emergencyQueue.empty()) {
+            Patient p = emergencyQueue.top();
+            emergencyQueue.pop();
+            cout << "Serving EMERGENCY patient: " << p.name 
+                 << " (Severity " << p.severity << ")\n";
+        } else if (!regularQueue.empty()) {
+            Patient p = regularQueue.front();
+            regularQueue.pop();
+            cout << "Serving regular patient: " << p.name << "\n";
+        } else {
+            cout << "No patients in queue.\n";
+        }
+    }
+
+    // Display estimated wait times
+    void showWaitTimes() {
+        int totalPatients = emergencyQueue.size() + regularQueue.size();
+        if (totalPatients == 0) {
+            cout << "No patients waiting.\n";
+            return;
+        }
+
+        cout << "\n--- Estimated Wait Times ---\n";
+        int time = 0;
+
+        // Copy queues for display
+        auto tempEmergency = emergencyQueue;
+        auto tempRegular = regularQueue;
+
+        while (!tempEmergency.empty()) {
+            Patient p = tempEmergency.top();
+            tempEmergency.pop();
+            time += consultationTime;
+            cout << "EMERGENCY: " << p.name << " (Severity " << p.severity 
+                 << ") -> Wait: " << time << " min\n";
+        }
+        while (!tempRegular.empty()) {
+            Patient p = tempRegular.front();
+            tempRegular.pop();
+            time += consultationTime;
+            cout << "Regular: " << p.name << " -> Wait: " << time << " min\n";
+        }
+        cout << "----------------------------\n";
+    }
+};
+
+// Main program
+int main() {
+    Hospital hospital;
+    int choice, severity;
+    string name;
+
+    do {
+        cout << "\n1. Add Emergency Patient\n2. Add Regular Patient\n3. Serve Next Patient\n4. Show Wait Times\n5. Exit\nEnter choice: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1:
+                cout << "Enter patient name: ";
+                getline(cin, name);
+                cout << "Enter severity level (1-10): ";
+                cin >> severity;
+                hospital.addPatient(name, true, severity);
+                break;
+            case 2:
+                cout << "Enter patient name: ";
+                getline(cin, name);
+                hospital.addPatient(name, false);
+                break;
+            case 3:
+                hospital.servePatient();
+                break;
+            case 4:
+                hospital.showWaitTimes();
+                break;
+            case 5:
+                cout << "Exiting...\n";
+                break;
+            default:
+                cout << "Invalid choice!\n";
+        }
+    } while (choice != 5);
+
+    return 0;
+}
