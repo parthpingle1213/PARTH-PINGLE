@@ -1,0 +1,124 @@
+#include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
+#include <ctime>
+#include <iomanip>
+
+using namespace std;
+
+// Message structure with timestamp
+struct Message {
+    string text;
+    string timestamp;
+
+    Message(string t) {
+        text = t;
+        // Get current time
+        time_t now = time(0);
+        tm *ltm = localtime(&now);
+        char buf[30];
+        strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ltm);
+        timestamp = buf;
+    }
+};
+
+// Chat Manager class
+class ChatManager {
+private:
+    queue<Message> chatHistory;   // stores all messages in order
+    stack<Message> undoStack;     // stores messages removed (for undo)
+    stack<Message> redoStack;     // stores undone messages (for redo)
+
+public:
+    // Send a new message
+    void sendMessage(const string &text) {
+        Message msg(text);
+        chatHistory.push(msg);
+        undoStack.push(msg);
+        // clear redo stack because new action invalidates redo history
+        while (!redoStack.empty()) redoStack.pop();
+
+        cout << "Sent: \"" << msg.text << "\" at " << msg.timestamp << endl;
+    }
+
+    // Undo last message
+    void undoMessage() {
+        if (undoStack.empty()) {
+            cout << "No messages to undo!\n";
+            return;
+        }
+        Message msg = undoStack.top();
+        undoStack.pop();
+        redoStack.push(msg);
+
+        cout << "Undo: \"" << msg.text << "\" at " << msg.timestamp << endl;
+    }
+
+    // Redo last undone message
+    void redoMessage() {
+        if (redoStack.empty()) {
+            cout << "No messages to redo!\n";
+            return;
+        }
+        Message msg = redoStack.top();
+        redoStack.pop();
+        undoStack.push(msg);
+
+        cout << "Redo: \"" << msg.text << "\" at " << msg.timestamp << endl;
+    }
+
+    // Display chat history
+    void displayHistory() {
+        if (chatHistory.empty()) {
+            cout << "Chat history is empty.\n";
+            return;
+        }
+
+        cout << "\n--- Chat History ---\n";
+        queue<Message> temp = chatHistory;
+        while (!temp.empty()) {
+            Message msg = temp.front();
+            temp.pop();
+            cout << "[" << msg.timestamp << "] " << msg.text << endl;
+        }
+        cout << "--------------------\n";
+    }
+};
+
+// Main program
+int main() {
+    ChatManager chat;
+    int choice;
+    string message;
+
+    do {
+        cout << "\n1. Send Message\n2. Undo Last Message\n3. Redo Last Message\n4. Show Chat History\n5. Exit\nEnter choice: ";
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1:
+                cout << "Enter message: ";
+                getline(cin, message);
+                chat.sendMessage(message);
+                break;
+            case 2:
+                chat.undoMessage();
+                break;
+            case 3:
+                chat.redoMessage();
+                break;
+            case 4:
+                chat.displayHistory();
+                break;
+            case 5:
+                cout << "Exiting chat...\n";
+                break;
+            default:
+                cout << "Invalid choice!\n";
+        }
+    } while (choice != 5);
+
+    return 0;
+}
